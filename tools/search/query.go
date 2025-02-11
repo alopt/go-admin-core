@@ -100,7 +100,7 @@ func pgSql(driver string, t *resolveSearchTag, condition Condition, qValue refle
 		condition.SetWhere(fmt.Sprintf("%s.%s in (?)", t.Table, t.Column), []interface{}{qValue.Field(i).Interface()})
 	case "isnull":
 		if !(qValue.Field(i).IsZero() && qValue.Field(i).IsNil()) {
-			condition.SetWhere(fmt.Sprintf("%s.%s isnull", t.Table, t.Column), make([]interface{}, 0))
+			condition.SetWhere(fmt.Sprintf("%s.%s is null", t.Table, t.Column), make([]interface{}, 0))
 		}
 	case "order":
 		switch strings.ToLower(qValue.Field(i).String()) {
@@ -143,7 +143,7 @@ func otherSql(driver string, t *resolveSearchTag, condition Condition, qValue re
 		condition.SetWhere(fmt.Sprintf("`%s`.`%s` in (?)", t.Table, t.Column), []interface{}{qValue.Field(i).Interface()})
 	case "isnull":
 		if !(qValue.Field(i).IsZero() && qValue.Field(i).IsNil()) {
-			condition.SetWhere(fmt.Sprintf("`%s`.`%s` isnull", t.Table, t.Column), make([]interface{}, 0))
+			condition.SetWhere(fmt.Sprintf("`%s`.`%s` is null", t.Table, t.Column), make([]interface{}, 0))
 		}
 	case "order":
 		switch strings.ToLower(qValue.Field(i).String()) {
