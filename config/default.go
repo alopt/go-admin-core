@@ -84,7 +84,7 @@ func (c *config) Options() Options {
 func (c *config) run() {
 	watch := func(w loader.Watcher) error {
 		for {
-			// get changeset
+			// get changeset 获取变更集
 			snap, err := w.Next()
 			if err != nil {
 				return err
@@ -97,13 +97,22 @@ func (c *config) run() {
 				continue
 			}
 
-			// save
+			// save 保存快照
 			c.snap = snap
 
-			// set values
-			c.vals, _ = c.opts.Reader.Values(snap.ChangeSet)
+			// set values 设置值
+			c.vals, err = c.opts.Reader.Values(snap.ChangeSet)
+			if err != nil {
+				c.Unlock()
+				log.Errorf("failed to read values: %v", err)
+				continue
+			}
 			if c.opts.Entity != nil {
-				_ = c.vals.Scan(c.opts.Entity)
+				if err := c.vals.Scan(c.opts.Entity); err != nil {
+					c.Unlock()
+					log.Errorf("failed to scan entity: %v", err)
+					continue
+				}
 				c.opts.Entity.OnChange()
 			}
 
@@ -114,13 +123,16 @@ func (c *config) run() {
 	for {
 		w, err := c.opts.Loader.Watch()
 		if err != nil {
+			log.Errorf("failed to start watcher: %v", err)
 			time.Sleep(time.Second)
 			continue
 		}
 
 		done := make(chan bool)
+		// close done channel when exit
+		defer close(done)
 
-		// the stop watch func
+		// the stop watch func 停止监控函数
 		go func() {
 			select {
 			case <-done:
@@ -129,16 +141,15 @@ func (c *config) run() {
 			_ = w.Stop()
 		}()
 
-		// block watch
+		// block watch 阻塞监控
 		if err := watch(w); err != nil {
+			// 记录错误日志
+			log.Errorf("watch error: %v", err)
 			// do something better
 			time.Sleep(time.Second)
 		}
 
-		// close done chan
-		close(done)
-
-		// if the config is closed exit
+		// if the config is closed exit 检查是否退出
 		select {
 		case <-c.exit:
 			return
@@ -263,7 +274,7 @@ func (c *config) Load(sources ...source.Source) error {
 }
 
 func (c *config) Watch(path ...string) (Watcher, error) {
-	value := c.Get(path...)
+	readerValue := c.Get(path...)
 
 	w, err := c.opts.Loader.Watch(path...)
 	if err != nil {
@@ -274,7 +285,7 @@ func (c *config) Watch(path ...string) (Watcher, error) {
 		lw:    w,
 		rd:    c.opts.Reader,
 		path:  path,
-		value: value,
+		value: readerValue,
 	}, nil
 }
 
