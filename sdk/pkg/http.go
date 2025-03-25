@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// 发送GET请求
+// Get 发送GET请求
 // url：         请求地址
 // response：    请求返回的内容
 func Get(url string) (string, error) {
@@ -31,7 +31,7 @@ func Get(url string) (string, error) {
 	return string(result), nil
 }
 
-// 发送POST请求
+// Post 发送POST请求
 // url：         请求地址
 // data：        POST请求提交的数据
 // contentType： 请求体格式，如：application/json
