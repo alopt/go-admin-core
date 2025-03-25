@@ -15,11 +15,15 @@ import (
 )
 
 func init() {
+	// 初始化默认日志级别
+	// Initialize default log level
 	lvl, err := GetLevel(os.Getenv("GO_ADMIN_LOG_LEVEL"))
 	if err != nil {
 		lvl = InfoLevel
 	}
 
+	// 创建默认日志记录器
+	// Create default logger
 	DefaultLogger = NewHelper(NewLogger(WithLevel(lvl)))
 }
 
@@ -29,6 +33,7 @@ type defaultLogger struct {
 }
 
 // Init (opts...) should only overwrite provided options
+// Init (opts...) 只应覆盖提供的选项
 func (l *defaultLogger) Init(opts ...Option) error {
 	for _, o := range opts {
 		o(&l.opts)
@@ -36,10 +41,14 @@ func (l *defaultLogger) Init(opts ...Option) error {
 	return nil
 }
 
+// String 返回日志记录器的名称
+// String returns the name of the logger
 func (l *defaultLogger) String() string {
 	return "default"
 }
 
+// Fields 设置默认字段
+// Fields sets default fields
 func (l *defaultLogger) Fields(fields map[string]interface{}) Logger {
 	l.Lock()
 	l.opts.Fields = copyFields(fields)
@@ -47,6 +56,8 @@ func (l *defaultLogger) Fields(fields map[string]interface{}) Logger {
 	return l
 }
 
+// copyFields 复制字段
+// copyFields copies fields
 func copyFields(src map[string]interface{}) map[string]interface{} {
 	dst := make(map[string]interface{}, len(src))
 	for k, v := range src {
@@ -55,8 +66,8 @@ func copyFields(src map[string]interface{}) map[string]interface{} {
 	return dst
 }
 
-// logCallerfilePath returns a package/file:line description of the caller,
-// preserving only the leaf directory name and file name.
+// logCallerfilePath 返回调用者的包/文件:行信息
+// logCallerfilePath returns a package/file:line description of the caller
 func logCallerfilePath(loggingFilePath string) string {
 	// To make sure we trim the path correctly on Windows too, we
 	// counter-intuitively need to use '/' and *not* os.PathSeparator here,
@@ -79,14 +90,20 @@ func logCallerfilePath(loggingFilePath string) string {
 	return loggingFilePath[idx+1:]
 }
 
+// Log 记录日志条目
+// Log logs a log entry
 func (l *defaultLogger) Log(level Level, v ...interface{}) {
 	l.logf(level, "", v...)
 }
 
+// Logf 记录格式化的日志条目
+// Logf logs a formatted log entry
 func (l *defaultLogger) Logf(level Level, format string, v ...interface{}) {
 	l.logf(level, format, v...)
 }
 
+// logf 记录日志条目
+// logf logs a log entry
 func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
 	// TODO decide does we need to write message if log level not used?
 	if !l.opts.Level.Enabled(level) {
@@ -152,6 +169,8 @@ func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
 
 }
 
+// Options 返回日志记录器选项
+// Options returns the logger options
 func (l *defaultLogger) Options() Options {
 	// not guard against options Context values
 	l.RLock()
@@ -161,7 +180,8 @@ func (l *defaultLogger) Options() Options {
 	return opts
 }
 
-// NewLogger builds a new logger based on options
+// NewLogger 创建一个新的日志记录器
+// NewLogger creates a new logger
 func NewLogger(opts ...Option) Logger {
 	// Default options
 	options := Options{
