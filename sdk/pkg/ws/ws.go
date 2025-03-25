@@ -34,25 +34,25 @@ type Client struct {
 	Message    chan []byte
 }
 
-// messageData 单个发送数据信息
+// MessageData 单个发送数据信息
 type MessageData struct {
 	Id, Group string
 	Context   context.Context
 	Message   []byte
 }
 
-// groupMessageData 组广播数据信息
+// GroupMessageData 组广播数据信息
 type GroupMessageData struct {
 	Group   string
 	Message []byte
 }
 
-// 广播发送数据信息
+// BroadCastMessageData 广播发送数据信息
 type BroadCastMessageData struct {
 	Message []byte
 }
 
-// 读信息，从 websocket 连接直接读取数据
+// Read 读信息，从 websocket 连接直接读取数据
 func (c *Client) Read(cxt context.Context) {
 	defer func(cxt context.Context) {
 		WebsocketManager.UnRegister <- c
@@ -75,7 +75,7 @@ func (c *Client) Read(cxt context.Context) {
 	}
 }
 
-// 写信息，从 channel 变量 Send 中读取数据写入 websocket 连接
+// Write 写信息，从 channel 变量 Send 中读取数据写入 websocket 连接
 func (c *Client) Write(cxt context.Context) {
 	defer func(cxt context.Context) {
 		log.Printf("client [%s] disconnect", c.Id)
@@ -105,7 +105,7 @@ func (c *Client) Write(cxt context.Context) {
 	}
 }
 
-// 启动 websocket 管理器
+// Start 启动 websocket 管理器
 func (manager *Manager) Start() {
 	log.Printf("websocket manage start")
 	for {
@@ -154,7 +154,7 @@ func (manager *Manager) Start() {
 	}
 }
 
-// 处理单个 client 发送数据
+// SendService 处理单个 client 发送数据
 func (manager *Manager) SendService() {
 	for {
 		select {
@@ -168,7 +168,7 @@ func (manager *Manager) SendService() {
 	}
 }
 
-// 处理 group 广播数据
+// SendGroupService 处理 group 广播数据
 func (manager *Manager) SendGroupService() {
 	for {
 		select {
@@ -183,7 +183,7 @@ func (manager *Manager) SendGroupService() {
 	}
 }
 
-// 处理广播数据
+// SendAllService 处理广播数据
 func (manager *Manager) SendAllService() {
 	for {
 		select {
@@ -197,7 +197,7 @@ func (manager *Manager) SendAllService() {
 	}
 }
 
-// 向指定的 client 发送数据
+// Send 向指定的 client 发送数据
 func (manager *Manager) Send(cxt context.Context, id string, group string, message []byte) {
 	data := &MessageData{
 		Id:      id,
@@ -208,7 +208,7 @@ func (manager *Manager) Send(cxt context.Context, id string, group string, messa
 	manager.Message <- data
 }
 
-// 向指定的 Group 广播
+// SendGroup 向指定的 Group 广播
 func (manager *Manager) SendGroup(group string, message []byte) {
 	data := &GroupMessageData{
 		Group:   group,
@@ -217,7 +217,7 @@ func (manager *Manager) SendGroup(group string, message []byte) {
 	manager.GroupMessage <- data
 }
 
-// 广播
+// SendAll 广播
 func (manager *Manager) SendAll(message []byte) {
 	data := &BroadCastMessageData{
 		Message: message,
@@ -225,27 +225,27 @@ func (manager *Manager) SendAll(message []byte) {
 	manager.BroadCastMessage <- data
 }
 
-// 注册
+// RegisterClient 注册
 func (manager *Manager) RegisterClient(client *Client) {
 	manager.Register <- client
 }
 
-// 注销
+// UnRegisterClient 注销
 func (manager *Manager) UnRegisterClient(client *Client) {
 	manager.UnRegister <- client
 }
 
-// 当前组个数
+// LenGroup 当前组个数
 func (manager *Manager) LenGroup() uint {
 	return manager.groupCount
 }
 
-// 当前连接个数
+// LenClient 当前连接个数
 func (manager *Manager) LenClient() uint {
 	return manager.clientCount
 }
 
-// 获取 wsManager 管理器信息
+// Info 获取 wsManager 管理器信息
 func (manager *Manager) Info() map[string]interface{} {
 	managerInfo := make(map[string]interface{})
 	managerInfo["groupLen"] = manager.LenGroup()
@@ -258,7 +258,7 @@ func (manager *Manager) Info() map[string]interface{} {
 	return managerInfo
 }
 
-// 初始化 wsManager 管理器
+// WebsocketManager 初始化 wsManager 管理器
 var WebsocketManager = Manager{
 	Group:            make(map[string]map[string]*Client),
 	Register:         make(chan *Client, 128),
@@ -270,7 +270,7 @@ var WebsocketManager = Manager{
 	clientCount:      0,
 }
 
-// gin 处理 websocket handler
+// WsClient gin 处理 websocket handler
 func (manager *Manager) WsClient(c *gin.Context) {
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -309,6 +309,7 @@ func (manager *Manager) WsClient(c *gin.Context) {
 	pkg.FileMonitoringById(ctx, "temp/logs/job/db-20200820.log", c.Param("id"), c.Param("channel"), SendOne)
 }
 
+// UnWsClient gin 处理 websocket 关闭
 func (manager *Manager) UnWsClient(c *gin.Context) {
 	id := c.Param("id")
 	group := c.Param("channel")
@@ -321,21 +322,25 @@ func (manager *Manager) UnWsClient(c *gin.Context) {
 	})
 }
 
-func SendGroup(msg []byte) {
-	WebsocketManager.SendGroup("leffss", []byte("{\"code\":200,\"data\":"+string(msg)+"}"))
+// SendGroup 向指定的 Group 广播
+func SendGroup(group string, msg []byte) {
+	WebsocketManager.SendGroup(group, []byte("{\"code\":200,\"data\":"+string(msg)+"}"))
 	fmt.Println(WebsocketManager.Info())
 }
 
+// SendAll 广播
 func SendAll(msg []byte) {
 	WebsocketManager.SendAll([]byte("{\"code\":200,\"data\":" + string(msg) + "}"))
 	fmt.Println(WebsocketManager.Info())
 }
 
+// SendOne 向指定的 client 发送数据
 func SendOne(ctx context.Context, id string, group string, msg []byte) {
 	WebsocketManager.Send(ctx, id, group, []byte("{\"code\":200,\"data\":"+string(msg)+"}"))
 	fmt.Println(WebsocketManager.Info())
 }
 
+// WsLogout 注销
 func WsLogout(id string, group string) {
 	WebsocketManager.UnRegisterClient(&Client{Id: id, Group: group})
 	fmt.Println(WebsocketManager.Info())
