@@ -88,8 +88,12 @@ func Setup(s source.Source,
 		config.WithSource(s),
 		config.WithEntity(_cfg),
 	)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("New config object fail: %s", err.Error()))
-	}
+	handleError(err, "New config object fail")
 	_cfg.Init()
+}
+
+func handleError(err error, msg string) {
+	if err != nil {
+		log.Fatal(fmt.Sprintf("%s: %s", msg, err.Error()))
+	}
 }
