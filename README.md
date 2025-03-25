@@ -19,6 +19,9 @@
 使用 `Setup` 函数初始化配置：
 
 ```go
+package main
+
+import "github.com/GoAdminTeam/go-admin-core/logger"
 
 source := config.FileSource("config.json")
 config.Setup(source, func() {
@@ -31,6 +34,9 @@ config.Setup(source, func() {
 使用 Log 和 Logf 方法记录日志：
 
 ```go
+package main
+
+import "github.com/GoAdminTeam/go-admin-core/logger"
 
 logger := logger.NewDefaultLogger()
 logger.Log(logger.INFO, "This is an info message")
