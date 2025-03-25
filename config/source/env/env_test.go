@@ -88,9 +88,9 @@ func TestEnvvar_Prefixes(t *testing.T) {
 	}
 
 	for _, pt := range prefixtests {
-		source := NewSource(pt.prefixOpts...)
+		newSource := NewSource(pt.prefixOpts...)
 
-		c, err := source.Read()
+		c, err := newSource.Read()
 		if err != nil {
 			t.Error(err)
 		}
