@@ -24,22 +24,9 @@ func (e *env) Read() (*source.ChangeSet, error) {
 	var changes map[string]interface{}
 
 	for _, env := range os.Environ() {
-
-		if len(e.prefixes) > 0 || len(e.strippedPrefixes) > 0 {
-			notFound := true
-
-			if _, ok := matchPrefix(e.prefixes, env); ok {
-				notFound = false
-			}
-
-			if match, ok := matchPrefix(e.strippedPrefixes, env); ok {
-				env = strings.TrimPrefix(env, match)
-				notFound = false
-			}
-
-			if notFound {
-				continue
-			}
+		env = e.processEnv(env)
+		if env == "" {
+			continue
 		}
 
 		pair := strings.SplitN(env, "=", 2)
@@ -82,6 +69,26 @@ func (e *env) Read() (*source.ChangeSet, error) {
 	cs.Checksum = cs.Sum()
 
 	return cs, nil
+}
+
+func (e *env) processEnv(env string) string {
+	if len(e.prefixes) > 0 || len(e.strippedPrefixes) > 0 {
+		notFound := true
+
+		if _, ok := matchPrefix(e.prefixes, env); ok {
+			notFound = false
+		}
+
+		if match, ok := matchPrefix(e.strippedPrefixes, env); ok {
+			env = strings.TrimPrefix(env, match)
+			notFound = false
+		}
+
+		if notFound {
+			return ""
+		}
+	}
+	return env
 }
 
 func matchPrefix(pre []string, s string) (string, bool) {
