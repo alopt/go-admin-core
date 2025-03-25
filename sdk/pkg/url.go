@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//获取URL中批量id并解析
+// IdsStrToIdsIntGroup 获取URL中批量id并解析
 func IdsStrToIdsIntGroup(key string, c *gin.Context) []int {
 	return IdsStrToIdsIntGroupStr(c.Param(key))
 }
