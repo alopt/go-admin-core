@@ -9,6 +9,24 @@ import (
 	"github.com/go-admin-team/go-admin-core/config/source"
 )
 
+func setEnvVars(vars map[string]string) {
+	for k, v := range vars {
+		os.Setenv(k, v)
+	}
+}
+
+func unsetEnvVars(vars map[string]string) {
+	for k := range vars {
+		os.Unsetenv(k)
+	}
+}
+
+func unmarshalData(data []byte) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := json.Unmarshal(data, &result)
+	return result, err
+}
+
 func TestEnv_Read(t *testing.T) {
 	expected := map[string]map[string]string{
 		"database": {
@@ -18,18 +36,23 @@ func TestEnv_Read(t *testing.T) {
 		},
 	}
 
-	os.Setenv("DATABASE_HOST", "localhost")
-	os.Setenv("DATABASE_PASSWORD", "password")
-	os.Setenv("DATABASE_DATASOURCE", "user:password@tcp(localhost:port)/db?charset=utf8mb4&parseTime=True&loc=Local")
+	envVars := map[string]string{
+		"DATABASE_HOST":       "localhost",
+		"DATABASE_PASSWORD":   "password",
+		"DATABASE_DATASOURCE": "user:password@tcp(localhost:port)/db?charset=utf8mb4&parseTime=True&loc=Local",
+	}
 
-	source := NewSource()
-	c, err := source.Read()
+	setEnvVars(envVars)
+	defer unsetEnvVars(envVars)
+
+	newSource := NewSource()
+	c, err := newSource.Read()
 	if err != nil {
 		t.Error(err)
 	}
 
-	var actual map[string]interface{}
-	if err := json.Unmarshal(c.Data, &actual); err != nil {
+	actual, err := unmarshalData(c.Data)
+	if err != nil {
 		t.Error(err)
 	}
 
@@ -45,10 +68,15 @@ func TestEnv_Read(t *testing.T) {
 }
 
 func TestEnvvar_Prefixes(t *testing.T) {
-	os.Setenv("APP_DATABASE_HOST", "localhost")
-	os.Setenv("APP_DATABASE_PASSWORD", "password")
-	os.Setenv("VAULT_ADDR", "vault:1337")
-	os.Setenv("GO_ADMIN_CORE_REGISTRY", "mdns")
+	envVars := map[string]string{
+		"APP_DATABASE_HOST":      "localhost",
+		"APP_DATABASE_PASSWORD":  "password",
+		"VAULT_ADDR":             "vault:1337",
+		"GO_ADMIN_CORE_REGISTRY": "mdns",
+	}
+
+	setEnvVars(envVars)
+	defer unsetEnvVars(envVars)
 
 	var prefixtests = []struct {
 		prefixOpts   []source.Option
@@ -67,8 +95,8 @@ func TestEnvvar_Prefixes(t *testing.T) {
 			t.Error(err)
 		}
 
-		var actual map[string]interface{}
-		if err := json.Unmarshal(c.Data, &actual); err != nil {
+		actual, err := unmarshalData(c.Data)
+		if err != nil {
 			t.Error(err)
 		}
 
