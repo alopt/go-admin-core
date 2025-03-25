@@ -2,6 +2,8 @@ package logger
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 )
 
@@ -22,4 +24,30 @@ func TestLogger(t *testing.T) {
 	v := ctx.Value(&loggerKey{})
 	ll := v.(*Helper)
 	ll.Info("test_msg")
+}
+
+func TestLogger2(t *testing.T) {
+	slog.Info("hello", "count", 3, "name", "go-admin")
+	slog.Info("hello", "count", 3)
+
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	logger.Info("hello", "count", 3)
+
+	logger2 := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger2.Info("hello", "count", 3)
+
+	ctx := context.TODO()
+	list := []any{"key1", "val1"}
+	if len(list)%2 != 0 {
+		slog.Error("")
+	}
+	slog.Info("key1", list...)
+	//mp := map[string]interface{}{"key1": "val1"}
+
+	//for s, i := range mp {
+	//
+	//}
+	slog.InfoContext(ctx, "hello", list...)
+	logger2.Info("hello", "count", 3)
+	slog.InfoContext(ctx, "hello1", "count", 23)
 }
