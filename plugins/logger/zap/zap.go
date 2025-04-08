@@ -22,8 +22,6 @@ type zaplog struct {
 }
 
 func (l *zaplog) Init(opts ...logger.Option) error {
-	//var err error
-
 	for _, o := range opts {
 		o(&l.opts)
 	}
@@ -60,26 +58,20 @@ func (l *zaplog) Init(opts ...logger.Option) error {
 		zapConfig.Level)
 
 	log := zap.New(logCore, zap.AddCaller(), zap.AddCallerSkip(skip), zap.AddStacktrace(zap.DPanicLevel))
-	//log, err := zapConfig.Build(zap.AddCallerSkip(skip))
-	//if err != nil {
-	//	return err
-	//}
 
 	// Adding seed fields if exist
 	if l.opts.Fields != nil {
-		data := []zap.Field{}
+		fields := make([]zap.Field, 0, len(l.opts.Fields))
 		for k, v := range l.opts.Fields {
-			data = append(data, zap.Any(k, v))
+			fields = append(fields, zap.Any(k, v))
 		}
-		log = log.With(data...)
+		log = log.With(fields...)
 	}
 
 	// Adding namespace
 	if namespace, ok := l.opts.Context.Value(namespaceKey{}).(string); ok {
 		log = log.With(zap.Namespace(namespace))
 	}
-
-	// defer log.Sync() ??
 
 	l.cfg = zapConfig
 	l.zap = log
@@ -90,28 +82,26 @@ func (l *zaplog) Init(opts ...logger.Option) error {
 
 func (l *zaplog) Fields(fields map[string]interface{}) logger.Logger {
 	l.Lock()
-	nfields := make(map[string]interface{}, len(l.fields))
+	defer l.Unlock()
+	nfields := make(map[string]interface{}, len(l.fields)+len(fields))
 	for k, v := range l.fields {
 		nfields[k] = v
 	}
-	l.Unlock()
 	for k, v := range fields {
 		nfields[k] = v
 	}
 
-	data := make([]zap.Field, 0, len(nfields))
-	for k, v := range fields {
-		data = append(data, zap.Any(k, v))
+	zapFields := make([]zap.Field, 0, len(nfields))
+	for k, v := range nfields {
+		zapFields = append(zapFields, zap.Any(k, v))
 	}
 
-	zl := &zaplog{
+	return &zaplog{
 		cfg:    l.cfg,
-		zap:    l.zap,
+		zap:    l.zap.With(zapFields...),
 		opts:   l.opts,
 		fields: nfields,
 	}
-
-	return zl
 }
 
 func (l *zaplog) Error(err error) logger.Logger {
@@ -120,49 +110,47 @@ func (l *zaplog) Error(err error) logger.Logger {
 
 func (l *zaplog) Log(level logger.Level, args ...interface{}) {
 	l.RLock()
-	data := make([]zap.Field, 0, len(l.fields))
+	defer l.RUnlock()
+	zapFields := make([]zap.Field, 0, len(l.fields))
 	for k, v := range l.fields {
-		data = append(data, zap.Any(k, v))
+		zapFields = append(zapFields, zap.Any(k, v))
 	}
-	l.RUnlock()
 
-	lvl := loggerToZapLevel(level)
 	msg := fmt.Sprint(args...)
-	switch lvl {
+	switch loggerToZapLevel(level) {
 	case zap.DebugLevel:
-		l.zap.Debug(msg, data...)
+		l.zap.Debug(msg, zapFields...)
 	case zap.InfoLevel:
-		l.zap.Info(msg, data...)
+		l.zap.Info(msg, zapFields...)
 	case zap.WarnLevel:
-		l.zap.Warn(msg, data...)
+		l.zap.Warn(msg, zapFields...)
 	case zap.ErrorLevel:
-		l.zap.Error(msg, data...)
+		l.zap.Error(msg, zapFields...)
 	case zap.FatalLevel:
-		l.zap.Fatal(msg, data...)
+		l.zap.Fatal(msg, zapFields...)
 	}
 }
 
 func (l *zaplog) Logf(level logger.Level, format string, args ...interface{}) {
 	l.RLock()
-	data := make([]zap.Field, 0, len(l.fields))
+	defer l.RUnlock()
+	zapFields := make([]zap.Field, 0, len(l.fields))
 	for k, v := range l.fields {
-		data = append(data, zap.Any(k, v))
+		zapFields = append(zapFields, zap.Any(k, v))
 	}
-	l.RUnlock()
 
-	lvl := loggerToZapLevel(level)
 	msg := fmt.Sprintf(format, args...)
-	switch lvl {
+	switch loggerToZapLevel(level) {
 	case zap.DebugLevel:
-		l.zap.Debug(msg, data...)
+		l.zap.Debug(msg, zapFields...)
 	case zap.InfoLevel:
-		l.zap.Info(msg, data...)
+		l.zap.Info(msg, zapFields...)
 	case zap.WarnLevel:
-		l.zap.Warn(msg, data...)
+		l.zap.Warn(msg, zapFields...)
 	case zap.ErrorLevel:
-		l.zap.Error(msg, data...)
+		l.zap.Error(msg, zapFields...)
 	case zap.FatalLevel:
-		l.zap.Fatal(msg, data...)
+		l.zap.Fatal(msg, zapFields...)
 	}
 }
 
@@ -174,9 +162,8 @@ func (l *zaplog) Options() logger.Options {
 	return l.opts
 }
 
-// New builds a new logger based on options
+// NewLogger New builds a new logger based on options
 func NewLogger(opts ...logger.Option) (logger.Logger, error) {
-	// Default options
 	options := logger.Options{
 		Level:   logger.InfoLevel,
 		Fields:  make(map[string]interface{}),
