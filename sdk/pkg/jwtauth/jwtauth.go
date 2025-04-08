@@ -2,7 +2,7 @@ package jwtauth
 
 import (
 	"crypto/rsa"
-	"errors"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -221,10 +221,10 @@ var (
 	// RoleNameKey 角色名称  Old
 	RoleNameKey = "rolename"
 
-	// RoleIdKey 部门id
+	// DeptId 部门id
 	DeptId = "deptId"
 
-	// RoleKey 部门名称
+	// DeptName 部门名称
 	DeptName = "deptName"
 )
 
@@ -566,17 +566,9 @@ func (mw *GinJWTMiddleware) RefreshToken(c *gin.Context) (string, time.Time, err
 // CheckIfTokenExpire check if token expire
 func (mw *GinJWTMiddleware) CheckIfTokenExpire(c *gin.Context) (jwt.MapClaims, error) {
 	token, err := mw.ParseToken(c)
-
 	if err != nil {
-		// If we receive an error, and the error is anything other than a single
-		// ValidationErrorExpired, we want to return the error.
-		// If the error is just ValidationErrorExpired, we want to continue, as we can still
-		// refresh the token if it's within the MaxRefresh time.
-		// (see https://github.com/appleboy/gin-jwt/issues/176)
-		validationErr, ok := err.(*jwt.ValidationError)
-		if !ok || validationErr.Errors != jwt.ValidationErrorExpired {
-			return nil, err
-		}
+		err = errors.WithStack(err)
+		return nil, err
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
