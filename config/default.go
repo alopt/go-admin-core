@@ -10,6 +10,7 @@ import (
 	"github.com/go-admin-team/go-admin-core/config/reader"
 	"github.com/go-admin-team/go-admin-core/config/reader/json"
 	"github.com/go-admin-team/go-admin-core/config/source"
+	log "github.com/go-admin-team/go-admin-core/logger"
 )
 
 type config struct {
