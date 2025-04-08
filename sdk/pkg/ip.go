@@ -3,7 +3,7 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 )
@@ -14,39 +14,46 @@ func GetLocation(ip, key string) string {
 		return "内部IP"
 	}
 	url := "https://restapi.amap.com/v5/ip?ip=" + ip + "&type=4&key=" + key
-	fmt.Println("url", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("restapi.amap.com failed:", err)
+		fmt.Println("Failed to get response from restapi.amap.com:", err)
 		return "未知位置"
 	}
 	defer resp.Body.Close()
-	s, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(s))
 
-	m := make(map[string]string)
+	s, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read response body:", err)
+		return "未知位置"
+	}
 
+	var m map[string]string
 	err = json.Unmarshal(s, &m)
 	if err != nil {
-		fmt.Println("Umarshal failed:", err)
+		fmt.Println("Failed to unmarshal response:", err)
+		return "未知位置"
 	}
-	//if m["province"] == "" {
-	//	return "未知位置"
-	//}
-	return m["country"] + "-" + m["province"] + "-" + m["city"] + "-" + m["district"] + "-" + m["isp"]
+
+	// Construct the location string from the response map
+	location := fmt.Sprintf("%s-%s-%s-%s-%s", m["country"], m["province"], m["city"], m["district"], m["isp"])
+	return location
 }
 
 // GetLocalHost 获取局域网ip地址
 func GetLocalHost() string {
 	netInterfaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Println("net.Interfaces failed, err:", err.Error())
+		fmt.Println("Failed to get network interfaces:", err)
+		return ""
 	}
 
-	for i := 0; i < len(netInterfaces); i++ {
-		if (netInterfaces[i].Flags & net.FlagUp) != 0 {
-			addrs, _ := netInterfaces[i].Addrs()
-
+	for _, netInterface := range netInterfaces {
+		if (netInterface.Flags & net.FlagUp) != 0 {
+			addrs, err := netInterface.Addrs()
+			if err != nil {
+				fmt.Println("Failed to get addresses for interface:", err)
+				continue
+			}
 			for _, address := range addrs {
 				if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 					if ipnet.IP.To4() != nil {
@@ -55,7 +62,6 @@ func GetLocalHost() string {
 				}
 			}
 		}
-
 	}
 	return ""
 }
