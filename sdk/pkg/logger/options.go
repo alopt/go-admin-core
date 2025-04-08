@@ -15,8 +15,6 @@ type options struct {
 	level  string
 	stdout string
 	cap    uint
-	format string
-	output string
 }
 
 func setDefault() options {
@@ -56,12 +54,4 @@ func WithCap(n uint) Option {
 	return func(o *options) {
 		o.cap = n
 	}
-}
-
-func WithFormat(s string) Option {
-	return WithFormat(s)
-}
-
-func WithOutput(s string) Option {
-	return WithOutput(s)
 }
