@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -67,7 +66,7 @@ func copyFields(src map[string]interface{}) map[string]interface{} {
 }
 
 // logCallerfilePath 返回调用者的包/文件:行信息
-// logCallerfilePath returns a package/file:line description of the caller
+// returns a package/file:line description of the caller
 func logCallerfilePath(loggingFilePath string) string {
 	// To make sure we trim the path correctly on Windows too, we
 	// counter-intuitively need to use '/' and *not* os.PathSeparator here,
@@ -105,7 +104,6 @@ func (l *defaultLogger) Logf(level Level, format string, v ...interface{}) {
 // logf 记录日志条目
 // logf logs a log entry
 func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
-	// TODO decide does we need to write message if log level not used?
 	if !l.opts.Level.Enabled(level) {
 		return
 	}
@@ -114,9 +112,7 @@ func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
 	fields := copyFields(l.opts.Fields)
 	l.RUnlock()
 
-	//fields["level"] = level.String()
-
-	if _, file, line, ok := runtime.Caller(l.opts.CallerSkipCount); ok && level.String() == "error" {
+	if _, file, line, ok := runtime.Caller(l.opts.CallerSkipCount); ok && level == ErrorLevel {
 		fields["file"] = fmt.Sprintf("%s:%d", logCallerfilePath(file), line)
 	}
 
@@ -130,21 +126,8 @@ func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
 		rec.Message = fmt.Sprintf(format, v...)
 	}
 
-	keys := make([]string, 0, len(fields))
 	for k, v := range fields {
-		keys = append(keys, k)
 		rec.Metadata[k] = fmt.Sprintf("%v", v)
-	}
-
-	sort.Strings(keys)
-	metadata := ""
-
-	for i, k := range keys {
-		if i == 0 {
-			metadata += fmt.Sprintf("%v", fields[k])
-		} else {
-			metadata += fmt.Sprintf(" %v", fields[k])
-		}
 	}
 
 	var name string
@@ -152,21 +135,14 @@ func (l *defaultLogger) logf(level Level, format string, v ...interface{}) {
 		name = "[" + l.opts.Name + "]"
 	}
 	t := rec.Timestamp.Format("2006-01-02 15:04:05.000Z0700")
-	//fmt.Printf("%s\n", t)
-	//fmt.Printf("%s\n", name)
-	//fmt.Printf("%s\n", metadata)
-	//fmt.Printf("%v\n", rec.Message)
-	logStr := ""
+	logStr := fmt.Sprintf("%s %s %s %v\n", name, t, level.String(), rec.Message)
 	if name == "" {
-		logStr = fmt.Sprintf("%s %s %s %v\n", t, level.String(), metadata, rec.Message)
-	} else {
-		logStr = fmt.Sprintf("%s %s %s %s %v\n", name, t, level.String(), metadata, rec.Message)
-	}
-	_, err := l.opts.Out.Write([]byte(logStr))
-	if err != nil {
-		log.Printf("log [Logf] write error: %s \n", err.Error())
+		logStr = fmt.Sprintf("%s %s %v\n", t, level.String(), rec.Message)
 	}
 
+	if _, err := l.opts.Out.Write([]byte(logStr)); err != nil {
+		log.Printf("log [Logf] write error: %s \n", err.Error())
+	}
 }
 
 // Options 返回日志记录器选项
