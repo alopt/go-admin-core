@@ -12,25 +12,32 @@ import (
 )
 
 type Runtime interface {
-	// SetDb 多db设置，⚠️SetDbs不允许并发,可以根据自己的业务，例如app分库、host分库
-	SetDb(key string, db *gorm.DB)
-	GetDb() map[string]*gorm.DB
-	GetDbByKey(key string) *gorm.DB
-
-	SetApp(key string, app interface{})
-	GetApp() map[string]interface{}
-	GetAppByKey(key string) interface{}
+	// SetDbByTenant 设置租户数据库
+	SetDbByTenant(tenant string, db *gorm.DB)
+	// SetDb 设置默认租户数据库
+	SetDb(db *gorm.DB)
+	GetDbByTenant(tenant string) *gorm.DB
+	GetDb() *gorm.DB
+	GetAllDb() map[string]*gorm.DB
 
 	SetBefore(f func())
 	GetBefore() []func()
 
-	SetCasbinExclude(key string, list interface{})
-	GetCasbinExclude() map[string]interface{}
-	GetCasbinExcludeByKey(key string) interface{}
+	SetAppByTenant(tenant string, app interface{})
+	SetApp(app interface{})
+	GetApp() map[string]interface{}
+	GetAppByTenant(tenant string) interface{}
 
-	SetCasbin(key string, enforcer *casbin.SyncedEnforcer)
-	GetCasbin() map[string]*casbin.SyncedEnforcer
-	GetCasbinKey(key string) *casbin.SyncedEnforcer
+	SetCasbinExcludeByTenant(tenant string, list interface{})
+	SetCasbinExclude(list interface{})
+	GetCasbinExclude() map[string]interface{}
+	GetCasbinExcludeByTenant(tenant string) interface{}
+
+	SetCasbinByTenant(tenant string, enforcer *casbin.SyncedEnforcer)
+	SetCasbin(enforcer *casbin.SyncedEnforcer)
+	GetAllCasbin() map[string]*casbin.SyncedEnforcer
+	GetCasbin() *casbin.SyncedEnforcer
+	GetCasbinByTenant(tenant string) *casbin.SyncedEnforcer
 
 	// SetEngine 使用的路由
 	SetEngine(engine http.Handler)
@@ -42,40 +49,48 @@ type Runtime interface {
 	SetLogger(logger logger.Logger)
 	GetLogger() logger.Logger
 
-	// SetCrontab crontab
-	SetCrontab(key string, crontab *cron.Cron)
-	GetCrontab() map[string]*cron.Cron
-	GetCrontabKey(key string) *cron.Cron
+	SetDefaultTenant(tenant string)
+	GetDefaultTenant() string
+
+	// SetCrontabByTenant crontab
+	SetCrontabByTenant(tenant string, crontab *cron.Cron)
+	SetCrontab(crontab *cron.Cron)
+	GetCrontab() *cron.Cron
+	GetAllCrontab() map[string]*cron.Cron
+	GetCrontabByTenant(tenant string) *cron.Cron
 
 	// SetMiddleware middleware
 	SetMiddleware(string, interface{})
-	GetMiddleware() map[string]interface{}
-	GetMiddlewareKey(key string) interface{}
+	GetAllMiddleware() map[string]interface{}
+	GetMiddleware(string) interface{}
 
 	// SetCacheAdapter cache
 	SetCacheAdapter(storage.AdapterCache)
 	GetCacheAdapter() storage.AdapterCache
-	GetCachePrefix(string) storage.AdapterCache
+	GetCacheAdapterPrefix(string) storage.AdapterCache
 
 	GetMemoryQueue(string) storage.AdapterQueue
 	SetQueueAdapter(storage.AdapterQueue)
 	GetQueueAdapter() storage.AdapterQueue
 	GetQueuePrefix(string) storage.AdapterQueue
 
-	//SetLockerAdapter(storage.AdapterLocker)
-	//GetLockerAdapter() storage.AdapterLocker
-	//GetLockerPrefix(string) storage.AdapterLocker
-
-	SetHandler(key string, routerGroup func(r *gin.RouterGroup, hand ...*gin.HandlerFunc))
-	GetHandler() map[string][]func(r *gin.RouterGroup, hand ...*gin.HandlerFunc)
-	GetHandlerPrefix(key string) []func(r *gin.RouterGroup, hand ...*gin.HandlerFunc)
+	SetHandler(routerGroup func(r *gin.RouterGroup, hand ...*gin.HandlerFunc))
+	SetHandlerByTenant(tenant string, routerGroup func(r *gin.RouterGroup, hand ...*gin.HandlerFunc))
+	GetAllHandler() map[string][]func(r *gin.RouterGroup, hand ...*gin.HandlerFunc)
+	GetHandler() []func(r *gin.RouterGroup, hand ...*gin.HandlerFunc)
+	GetHandlerByTenant(tenant string) []func(r *gin.RouterGroup, hand ...*gin.HandlerFunc)
 
 	GetStreamMessage(id, stream string, value map[string]interface{}) (storage.Messager, error)
 
-	GetConfigByTenant(tenant string) interface{}
-	GetConfig(tenant, key string) interface{}
+	// SetConfigByTenant 设置对应租户的config
 	SetConfigByTenant(tenant string, value map[string]interface{})
-	SetConfig(tenant, key string, value interface{})
+	// SetConfigValueByTenant 设置对应租户的key对应的value
+	SetConfigValueByTenant(tenant, key string, value interface{})
+	SetConfigValue(key string, value interface{})
+	GetConfigValueByTenant(tenant, key string) interface{}
+	GetConfigByTenant(tenant string) map[string]interface{}
+	GetConfig() map[string]interface{}
+	GetConfigValue(key string) interface{}
 
 	// SetAppRouters set AppRouter
 	SetAppRouters(appRouters func())
