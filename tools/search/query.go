@@ -78,6 +78,8 @@ func pgSql(driver string, t *resolveSearchTag, condition Condition, qValue refle
 		condition.SetWhere(fmt.Sprintf("%s.%s ilike ?", t.Table, t.Column), []interface{}{"%" + qValue.Field(i).String() + "%"})
 	case "contains":
 		condition.SetWhere(fmt.Sprintf("%s.%s like ?", t.Table, t.Column), []interface{}{"%" + qValue.Field(i).String() + "%"})
+	case "containspath":
+		condition.SetWhere(fmt.Sprintf("%s.%s like ?", t.Table, t.Column), []interface{}{"%/" + qValue.Field(i).String() + "/%"})
 	case "gt":
 		condition.SetWhere(fmt.Sprintf("%s.%s > ?", t.Table, t.Column), []interface{}{qValue.Field(i).Interface()})
 	case "gte":
@@ -125,6 +127,8 @@ func otherSql(driver string, t *resolveSearchTag, condition Condition, qValue re
 		condition.SetWhere(fmt.Sprintf("`%s`.`%s` = ?", t.Table, t.Column), []interface{}{qValue.Field(i).Interface()})
 	case "contains", "icontains":
 		condition.SetWhere(fmt.Sprintf("`%s`.`%s` like ?", t.Table, t.Column), []interface{}{"%" + qValue.Field(i).String() + "%"})
+	case "containspath":
+		condition.SetWhere(fmt.Sprintf("`%s`.`%s` like ?", t.Table, t.Column), []interface{}{"%/" + qValue.Field(i).String() + "/%"})
 	case "gt":
 		condition.SetWhere(fmt.Sprintf("`%s`.`%s` > ?", t.Table, t.Column), []interface{}{qValue.Field(i).Interface()})
 	case "gte":
