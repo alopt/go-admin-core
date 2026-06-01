@@ -10,7 +10,7 @@ import (
 	"github.com/alopt/go-admin-core/sdk"
 	"github.com/alopt/go-admin-core/sdk/config"
 	redisWatcher "github.com/alopt/redis-watcher/v2"
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	gormAdapter "github.com/alopt/gorm-adapter/v3"

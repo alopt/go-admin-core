@@ -3,7 +3,7 @@ package queue
 import (
 	"github.com/alopt/go-admin-core/storage"
 	"github.com/alopt/redisqueue/v2"
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 // NewRedis redis模式
