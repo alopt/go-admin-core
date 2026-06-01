@@ -8,7 +8,7 @@ require (
 	github.com/alopt/gorm-adapter/v3 v3.7.8
 	github.com/alopt/redis-watcher/v2 v2.0.1
 	github.com/alopt/redisqueue/v2 v2.0.1
-	github.com/bsm/redislock v0.8.2
+	github.com/bsm/redislock v0.9.4
 	github.com/bytedance/go-tagexpr/v2 v2.7.12
 	github.com/casbin/casbin/v2 v2.77.2
 	github.com/chanxuehong/wechat v0.0.0-20201110083048-0180211b69fd
