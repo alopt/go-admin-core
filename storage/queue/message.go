@@ -3,7 +3,7 @@ package queue
 import (
 	"sync"
 
-	"github.com/go-admin-team/redisqueue/v2"
+	"github.com/alopt/redisqueue/v2"
 
 	"github.com/alopt/go-admin-core/storage"
 )
