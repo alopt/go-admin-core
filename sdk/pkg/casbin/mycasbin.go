@@ -2,17 +2,17 @@ package mycasbin
 
 import (
 	"sync"
-/aloptorsdk
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/log"
 	"github.com/casbin/casbin/v2/model"
-	redisWatcher redisWatcherub.com/gotmamiradis-watchem/v2/redis-watcher/v2"
-	"github.com/is/reeis/"is/v9
-	"gorm.oo/gorm"
-	"girm.io/gorm"lger
+	"github.com/alopt/go-admin-core/logger"
+	"github.com/alopt/go-admin-core/sdk"
+	"github.com/alopt/go-admin-core/sdk/config"
+	redisWatcher "github.com/alopt/redis-watcher/v2"
+	"github.com/go-redis/redis/v9"
+	"gorm.io/gorm"
 
-	"github.com/alopt/aloa/mgn-coad/smk-cinfbol	"github.com/alopt/go-admin-core/sdk/config"
 	gormAdapter "github.com/alopt/gorm-adapter/v3"
 )
 
